@@ -49,3 +49,26 @@ The system can handle requests such as password resets, VPN status checks, softw
 - FastAPI backend APIs
 - Chat-style interface
 
+# Project Architecture
+
+The application follows a modular architecture:
+
+text
+User
+   ↓
+Streamlit UI / FastAPI API
+   ↓
+DeskMate Agent
+   ↓
+Gemini LLM
+   ↓
+Tool Dispatcher
+   ↓
+Internal Services
+   ├── Ticket System
+   ├── Password System
+   ├── VPN Service
+   ├── Email Service
+   └── Database
+
+
