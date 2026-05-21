@@ -49,9 +49,6 @@ The system can handle requests such as password resets, VPN status checks, softw
 - FastAPI backend APIs
 - Chat-style interface
 
-# Project Architecture
-
-The application follows a modular architecture:
 
 # Project Architecture
 
