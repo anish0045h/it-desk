@@ -267,31 +267,8 @@ I need Adobe access
 What is the status of ticket TKT-1001?
 ```
 
----
 
-# Future Improvements
 
-- ServiceNow integration
-- Teams integration
-- Docker support
-- Authentication system
-- Analytics dashboard
-
----
-
-# Important Notes
-
-Do not upload:
-
-- .env
-- API keys
-- Database passwords
-- venv/
-- __pycache__/
-
-Use `.env.example` instead.
-
----
 
 # Author
 
