@@ -54,7 +54,7 @@ The system can handle requests such as password resets, VPN status checks, softw
 The application follows a modular architecture:
 
 text
-User
+'''User
    ↓
 Streamlit UI / FastAPI API
    ↓
@@ -70,6 +70,7 @@ Internal Services
    ├── VPN Service
    ├── Email Service
    └── Database
+   '''
 
 
 # Project Structure
