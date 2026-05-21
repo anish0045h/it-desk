@@ -138,3 +138,163 @@ DeskMate/
 **Language**
 - Python
 
+
+# Installation and Setup
+
+## 1. Clone Repository
+
+```bash
+git clone https://github.com/your-username/deskmate.git
+
+cd deskmate
+```
+
+## 2. Create Virtual Environment
+
+**Windows**
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+**Linux/Mac**
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+## 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+## 4. Create Environment File
+
+Create a `.env` file and add:
+
+```env
+GEMINI_API_KEY=your_api_key
+
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=deskmate
+DB_USER=postgres
+DB_PASSWORD=password
+```
+
+## 5. Get Gemini API Key
+
+1. Open: https://aistudio.google.com/
+2. Login with Google
+3. Generate API key
+4. Add it to `.env`
+
+## 6. Setup PostgreSQL
+
+Create database:
+
+```sql
+CREATE DATABASE deskmate;
+```
+
+Seed sample data:
+
+```bash
+python seed_db.py
+```
+
+---
+
+# Run Application
+
+**Streamlit UI**
+
+```bash
+streamlit run app.py
+```
+
+Open:
+
+```text
+http://localhost:8501
+```
+
+**FastAPI Backend**
+
+```bash
+uvicorn main:app --reload
+```
+
+Open:
+
+```text
+http://localhost:8000
+```
+
+---
+
+# API Endpoints
+
+```http
+POST /chat
+GET /employees
+GET /health
+GET /logs
+```
+
+---
+
+# Run Tests
+
+```bash
+python test_agent_flow.py
+```
+
+---
+
+# Sample Requests
+
+```text
+I forgot my password
+
+Check my VPN status
+
+I need Adobe access
+
+What is the status of ticket TKT-1001?
+```
+
+---
+
+# Future Improvements
+
+- ServiceNow integration
+- Teams integration
+- Docker support
+- Authentication system
+- Analytics dashboard
+
+---
+
+# Important Notes
+
+Do not upload:
+
+- .env
+- API keys
+- Database passwords
+- venv/
+- __pycache__/
+
+Use `.env.example` instead.
+
+---
+
+# Author
+
+Anish  
+AI/ML Developer | Python Developer
+
