@@ -72,3 +72,48 @@ Internal Services
    └── Database
 
 
+# Project Structure
+
+```text
+DeskMate/
+│
+├── agent.py
+│       Main AI agent logic
+│       Handles tool execution flow
+│
+├── app.py
+│       Streamlit frontend application
+│
+├── main.py
+│       FastAPI backend server
+│
+├── db.py
+│       PostgreSQL connection management
+│
+├── tools.py
+│       Internal tool implementations
+│
+├── mock_data.py
+│       In-memory mock database
+│
+├── seed_db.py
+│       Database seeding script
+│
+├── test_agent_flow.py
+│       Test script for agent workflow
+│
+├── requirements.txt
+│       Project dependencies
+│
+├── .env.example
+│       Example environment variables
+│
+├── .gitignore
+│
+├── README.md
+│
+└── static/
+        └── index.html
+```
+
+
