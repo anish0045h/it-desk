@@ -132,18 +132,7 @@ DeskMate/
 - psycopg2
 - Python-dotenv
 
-# Technology Stack
 
-**Frontend**
-- Streamlit
-
-**Backend**
-- FastAPI
-
-**AI**
-- Google Gemini API
-
-**Database**
 - PostgreSQL
 
 **Language**
