@@ -1,4 +1,4 @@
-# it-desk
+# DeskMate
 
 # 🖥️ DeskMate — AI Powered IT Helpdesk Assistant
 
