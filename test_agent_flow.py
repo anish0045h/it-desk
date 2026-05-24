@@ -1,79 +1,93 @@
+    
+    # test_agent_flow.py — Basic agent flow tests (uses live Gemini API)
+
 import os
 import sys
 import logging
+from unittest.mock import patch
 from dotenv import load_dotenv
 
-# Ensure local imports work
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+load_dotenv()
 
 from agent import DeskMateAgent
-from db import is_db_configured
 
 logging.basicConfig(level=logging.INFO)
 
-def run_agent_test():
-    load_dotenv()
-    
-    print("=== Checking DB configuration ===")
-    print(f"DB configured: {is_db_configured()}")
-    
-    print("\n=== Initializing DeskMateAgent ===")
+
+def get_agent() -> DeskMateAgent:
     try:
-        agent = DeskMateAgent()
+        return DeskMateAgent()
     except Exception as e:
-        print(f"[ERROR] Failed to initialize agent: {e}")
+        print(f"[ERROR] Could not initialise agent: {e}")
         sys.exit(1)
-        
-    print("\n=== Test Case 1: Software Entitlement and Ticket Creation ===")
-    message = "I need access to Adobe Creative Suite. Please check if I'm entitled, and if not, raise a high priority ticket."
-    employee_id = "emp_003" # Carol Davis
-    
-    print(f"Sending message: '{message}' as employee {employee_id}")
-    res = agent.process(employee_id=employee_id, message=message, history=[])
-    
-    print("\nAgent Response:")
-    print(res["response"])
-    
-    print("\nExecution Trace:")
-    for step in res["trace"]:
-        print(f" - {step['step']}: {step.get('detail') or step.get('tool')}")
-        if step['step'] == "Tool called":
-            print(f"   Args: {step.get('arguments')}")
-        elif step['step'] == "Result":
-            print(f"   Result: {step.get('result')}")
 
-    # Verify that the flow went through check_entitlement, create_ticket, send_email, notify_it_team
-    steps_run = [step["tool"] for step in res["trace"] if step["step"] == "Tool called"]
-    print(f"\nTools called in sequence: {steps_run}")
-    
-    expected_tools = ["check_entitlement", "create_ticket", "send_email", "notify_it_team"]
-    all_passed = True
-    for tool in expected_tools:
-        if tool not in steps_run:
-            print(f"[WARNING] Expected tool '{tool}' was not called.")
-            all_passed = False
-            
-    if all_passed:
-        print("[SUCCESS] All expected tools called in sequence!")
+
+def test_software_entitlement_flow():
+    """Carol (emp_003) is NOT entitled to Adobe — should trigger ticket + email + IT notification."""
+    print("\n=== Test 1: Software entitlement + ticket creation ===")
+    agent = get_agent()
+    result = agent.process(
+        employee_id="emp_003",
+        message="I need access to Adobe Creative Suite. If I'm not entitled, raise a high-priority ticket.",
+        history=[],
+    )
+    print("Response:", result["response"])
+
+    tools_called = [s["tool"] for s in result["trace"] if s["step"] == "Tool called"]
+    print("Tools called:", tools_called)
+
+    expected = ["check_entitlement", "create_ticket", "send_email", "notify_it_team"]
+    missing = [t for t in expected if t not in tools_called]
+    if missing:
+        print(f"[FAIL] Missing tools: {missing}")
     else:
-        print("[FAILURE] Some expected tools were missed.")
+        print("[PASS] All expected tools called.")
+    return result
 
-    print("\n=== Test Case 2: Querying Ticket Status (Unknown Ticket) ===")
-    message2 = "What is the status of ticket TKT-999999?"
-    print(f"Sending message: '{message2}'")
-    res2 = agent.process(employee_id=employee_id, message=message2, history=res["conversation_history"])
-    
-    print("\nAgent Response:")
-    print(res2["response"])
-    
-    print("\nExecution Trace:")
-    for step in res2["trace"]:
-        print(f" - {step['step']}: {step.get('detail') or step.get('tool')}")
 
-    if "Unable to locate the ticket." in res2["response"]:
-        print("[SUCCESS] Properly handled non-existent ticket error!")
+def test_unknown_ticket():
+    """Querying a non-existent ticket should return 'Unable to locate the ticket.'"""
+    print("\n=== Test 2: Non-existent ticket ===")
+    agent = get_agent()
+    result = agent.process(employee_id="emp_001", message="What is the status of ticket TKT-999999?", history=[])
+    print("Response:", result["response"])
+    if "unable to locate" in result["response"].lower():
+        print("[PASS] Correct not-found response.")
     else:
-        print("[WARNING] Did not reply with standard 'Unable to locate the ticket.'")
+        print("[FAIL] Expected 'Unable to locate the ticket.'")
+
+
+def test_out_of_scope():
+    """Non-IT request should be refused."""
+    print("\n=== Test 3: Out-of-scope request ===")
+    agent = get_agent()
+    result = agent.process(employee_id=None, message="What's the weather like today?", history=[])
+    print("Response:", result["response"])
+    if "it helpdesk" in result["response"].lower() or "only with it" in result["response"].lower():
+        print("[PASS] Out-of-scope request refused.")
+    else:
+        print("[WARN] Response may not be a clean refusal — check manually.")
+
+
+def test_password_reset_no_token_leak():
+    """Password reset response must NOT contain the raw temp token."""
+    print("\n=== Test 4: Password reset — no token leak ===")
+    agent = get_agent()
+    result = agent.process(employee_id="emp_001", message="Please reset my password.", history=[])
+    print("Response:", result["response"])
+
+    # Check trace doesn't contain temp_access_code
+    for step in result["trace"]:
+        if step.get("step") == "Result" and step.get("tool") == "reset_password":
+            assert "temp_access_code" not in step.get("result", {}), "[FAIL] Token found in trace!"
+            assert "token" not in step.get("result", {}), "[FAIL] Token found in trace!"
+    print("[PASS] No raw token in trace.")
+
 
 if __name__ == "__main__":
-    run_agent_test()
+    test_software_entitlement_flow()
+    test_unknown_ticket()
+    test_out_of_scope()
+    test_password_reset_no_token_leak()
+    print("\nAll tests completed.")
