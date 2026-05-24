@@ -1,6 +1,9 @@
-import os
+# db.py — PostgreSQL connection pool (optional; falls back to mock_data if unconfigured)
+
 import logging
+import os
 from contextlib import contextmanager
+
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
@@ -9,69 +12,51 @@ from dotenv import load_dotenv
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-# Connection string configuration
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.environ.get("DATABASE_URL") or (
+    "postgresql://{user}:{pw}@{host}:{port}/{db}".format(
+        user=os.getenv("DB_USER", "postgres"),
+        pw=os.getenv("DB_PASSWORD", "postgres"),
+        host=os.getenv("DB_HOST", "localhost"),
+        port=os.getenv("DB_PORT", "5432"),
+        db=os.getenv("DB_NAME", "deskmate"),
+    )
+)
 
-if not DATABASE_URL:
-    db_host = os.environ.get("DB_HOST", "localhost")
-    db_port = os.environ.get("DB_PORT", "5432")
-    db_name = os.environ.get("DB_NAME", "deskmate")
-    db_user = os.environ.get("DB_USER", "postgres")
-    db_password = os.environ.get("DB_PASSWORD", "postgres")
-    DATABASE_URL = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+_pool: SimpleConnectionPool | None = None
 
-# Initialise connection pool
-_pool = None
 
-def get_pool():
+def _get_pool() -> SimpleConnectionPool:
     global _pool
     if _pool is None:
-        try:
-            logger.info("Initialising PostgreSQL connection pool...")
-            _pool = SimpleConnectionPool(
-                minconn=1,
-                maxconn=15,
-                dsn=DATABASE_URL
-            )
-        except Exception as e:
-            logger.error("Failed to create PostgreSQL connection pool: %s", e)
-            raise e
+        _pool = SimpleConnectionPool(1, 10, dsn=DATABASE_URL)
+        logger.info("PostgreSQL connection pool initialised.")
     return _pool
+
 
 @contextmanager
 def get_db_cursor():
-    """
-    Context manager to fetch a connection from the pool, 
-    yield a dictionary-based cursor, and return the connection to the pool.
-    """
-    pool = get_pool()
+    """Yield a RealDictCursor; commit on success, rollback on error."""
+    pool = _get_pool()
     conn = pool.getconn()
     try:
-        # DictCursor allows accessing columns by name (like a dictionary)
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             yield cur
             conn.commit()
-    except Exception as e:
+    except Exception:
         conn.rollback()
-        logger.error("Database query failed, transaction rolled back: %s", e)
-        raise e
+        raise
     finally:
         pool.putconn(conn)
 
 
 def is_db_configured() -> bool:
-    """
-    Check if the database connection parameters are configured and active.
-    If placeholder strings are in the URL or the connection test fails, returns False.
-    """
-    url = DATABASE_URL
-    if not url or "your_database_name" in url or "your_password" in url:
+    """Return True only if a real DB connection can be established."""
+    if "your_password" in DATABASE_URL or "your_database" in DATABASE_URL:
         return False
     try:
-        pool = get_pool()
+        pool = _get_pool()
         conn = pool.getconn()
         pool.putconn(conn)
         return True
     except Exception:
         return False
-
