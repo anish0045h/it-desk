@@ -17,7 +17,6 @@ The system can handle requests such as password resets, VPN status checks, softw
 ## Password Reset Automation
 - Processes password reset requests
 - Generates temporary access codes
-- Sends employee notifications
 
 ## Software Entitlement Verification
 - Checks if employees have access to requested software
@@ -68,7 +67,6 @@ Internal Services
    ├── Ticket System
    ├── Password System
    ├── VPN Service
-   ├── Email Service
    └── Database
 ```
 
@@ -232,14 +230,7 @@ http://localhost:8000
 
 ---
 
-# API Endpoints
 
-```http
-POST /chat
-GET /employees
-GET /health
-GET /logs
-```
 
 ---
 
